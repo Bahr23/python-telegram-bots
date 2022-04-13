@@ -3,6 +3,8 @@ import re
 from telegram.ext import CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackQueryHandler
 
 from user_commands import *
+from admin_commands import *
+
 from buttons_commands import *
 
 
@@ -15,6 +17,9 @@ def command_handler(dispatcher):
 
     dispatcher.add_handler(MessageHandler(Filters.regex("Профиль"), my_profile))
     dispatcher.add_handler(CommandHandler("profile", my_profile))
+
+    dispatcher.add_handler(MessageHandler(Filters.regex("Мои заказы"), my_orders))
+    dispatcher.add_handler(CommandHandler("myorders", my_orders))
 
     # New order
     new_order_handler = ConversationHandler(
@@ -29,6 +34,14 @@ def command_handler(dispatcher):
 
     dispatcher.add_handler(new_order_handler)
 
+    # Admin commannds
+    dispatcher.add_handler(CommandHandler("admin", admin))
+    dispatcher.add_handler(CommandHandler("adminhelp", adminhelp))
+    dispatcher.add_handler(CommandHandler("getorder", getorder))
+    dispatcher.add_handler(CommandHandler("getuser", getuser))
+
     # Buttons
     dispatcher.add_handler(CallbackQueryHandler(btn_handler))
 
+    # Utils
+    dispatcher.add_handler(MessageHandler(Filters.text, all_messages))
