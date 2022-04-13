@@ -4,16 +4,14 @@ from telegram import Bot
 from telegram.ext import Updater
 
 from command_handler import command_handler
-
-
-TOKEN = '5153387425:AAHY4iARr7AoDhyXkctO85PFKSEjQBpWOk4'
+from config import *
 
 
 def main():
     bot = Bot(token=TOKEN)
-
-
     print(bot)
+    bot.delete_my_commands()
+
     logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 
     updater = Updater(token=TOKEN, use_context=True)

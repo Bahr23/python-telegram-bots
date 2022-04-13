@@ -15,6 +15,12 @@ class User(BaseModel):
     username = CharField()
 
 
+class Product(BaseModel):
+    id = AutoField()
+    name = CharField()
+    price = IntegerField()
+
+
 class Order(BaseModel):
     id = AutoField()
     status = CharField(default='В обработке')
@@ -24,4 +30,4 @@ class Order(BaseModel):
     phone = CharField()
 
 
-db.create_tables([User, Order])
+db.create_tables([User, Product, Order])

@@ -28,6 +28,15 @@ def help(update, context):
 
 
 @checkuser
+def all_messages(update, context):
+    text = "Я не знаю как на это ответить. Воспользуйтесь разделом 'Помощь' (/help)"
+    context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=text,
+                             reply_markup=get_menu('main').reply_markup,
+                             parse_mode=ParseMode.HTML)
+
+
+@checkuser
 def my_profile(update, context):
     user = User.get(id=update.message.from_user.id)
     context.bot.send_message(chat_id=update.effective_chat.id,
@@ -47,12 +56,13 @@ def cancel(update, context):
 # @checkuser
 def new_order(update, context):
     text = 'Выберите пункты меню:\n'
-    products = [('Product 1', '1000'), ('Product 2', '1500'), ('Product 3', '2000'), ('Product 4', '2500')]
+
+    products = Product.select()
 
     buttons = []
-    for item in products:
-        text += f"{item[0]} - {item[1]}р.\n"
-        buttons.append(InlineKeyboardButton(item[0], callback_data=f'@add_product@{item[0]}'))
+    for product in products:
+        text += f"{product.name} - {product.price}р.\n"
+        buttons.append(InlineKeyboardButton(product.name, callback_data=f'@add_product@{product.id}'))
 
     footer_keyboard = [
         InlineKeyboardButton('Завершить', callback_data='@doneproducts'),
@@ -96,15 +106,45 @@ def finish_order(update, context):
 
     order = Order(
         user=User.get(id=update.message.from_user.id),
-        products=context.user_data['products'],
+        products=','.join(context.user_data['products']),
         address=context.user_data['address'],
         phone=context.user_data['phone'],
     )
 
     order.save()
 
-    text = 'Завершение заказа'
+    text = get_order(order)
     context.bot.send_message(chat_id=update.effective_chat.id, text=text, parse_mode=ParseMode.HTML)
-    context.user_data = ''
+
+    admins = User.select().where(User.status == 'admin')
+    for admin in admins:
+        context.bot.send_message(
+            chat_id=admin.id,
+            text=f"<b>Поступил новый заказ!</b>\n" + get_order(order),
+            parse_mode=telegram.ParseMode.HTML,
+            reply_markup=get_order_buttons(order)
+        )
+
+    context.user_data.clear()
 
     return ConversationHandler.END
+
+
+@checkuser
+def my_orders(update, context):
+    user = User.get(id=update.message.from_user.id)
+    if user.orders:
+        text = "<b>Ваши заказы:</b>\n"
+        orders = get_user_orders(user)
+        text += orders.text
+        reply_markup = orders.reply_markup
+    else:
+        text = "У вас еще нет заказов."
+        reply_markup = None
+
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=text,
+        parse_mode=telegram.ParseMode.HTML,
+        reply_markup=reply_markup
+    )
